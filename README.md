@@ -1,74 +1,152 @@
-<header>
+# coding=utf-8
+#!/usr/bin/env python3
 
-<!--
-  <<< Author notes: Course header >>>
-  Include a 1280×640 image, course title in sentence case, and a concise description in emphasis.
-  In your repository settings: enable template repository, add your 1280×640 social image, auto delete head branches.
-  Add your open source license, GitHub uses MIT license.
--->
+from libs.check_modules import check_modules
+from sys import exit
+from os import _exit
 
-# Introduction to GitHub
+check_modules()
 
-_Get started using GitHub in less than an hour._
+from os import path
 
-</header>
+from libs.logo import print_logo
+from libs.utils import print_success
+from libs.utils import print_error
+from libs.utils import ask_question
+from libs.utils import print_status
+from libs.utils import parse_proxy_file
+from libs.proxy_harvester import find_proxies
+from libs.attack import report_profile_attack
+from libs.attack import report_video_attack
 
-<!--
-  <<< Author notes: Course start >>>
-  Include start button, a note about Actions minutes,
-  and tell the learner why they should take the course.
--->
+from multiprocessing import Process
+from colorama import Fore, Back, Style
 
-## Welcome
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
-People use GitHub to build some of the most advanced technologies in the world. Whether you’re visualizing data or building a new game, there’s a whole community and set of tools on GitHub that can help you do it even better. GitHub Skills’ “Introduction to GitHub” course guides you through everything you need to start contributing in less than an hour.
+def profile_attack_process(username, proxy_list):
+    if (len(proxy_list) == 0):
+        for _ in range(10):
+            report_profile_attack(username, None)
+        return
 
-- **Who is this for**: New developers, new GitHub users, and students.
-- **What you'll learn**: We'll introduce repositories, branches, commits, and pull requests.
-- **What you'll build**: We'll make a short Markdown file you can use as your [profile README](https://docs.github.com/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme).
-- **Prerequisites**: None. This course is a great introduction for your first day on GitHub.
-- **How long**: This course takes less than one hour to complete.
+    for proxy in proxy_list:
+        report_profile_attack(username, proxy)
 
-In this course, you will:
+def video_attack_process(video_url, proxy_list):
+    if (len(proxy_list) == 0):
+        for _ in range(10):
+            report_video_attack(video_url, None)
+        return
 
-1. Create a branch
-2. Commit a file
-3. Open a pull request
-4. Merge your pull request
+    for proxy in proxy_list:
+        report_video_attack(video_url, proxy)
 
-### How to start this course
+def video_attack(proxies):
+    video_url = ask_question("Enter the link of the video you want to report")
+    print(Style.RESET_ALL)
+    if (len(proxies) == 0):
+        for k in range(5):
+            p = Process(target=video_attack_process, args=(video_url, [],))
+            p.start()
+            print_status(str(k + 1) + ". Transaction Opened!")
+            if (k == 5): print()
+        return
 
-<!-- For start course, run in JavaScript:
-'https://github.com/new?' + new URLSearchParams({
-  template_owner: 'skills',
-  template_name: 'introduction-to-github',
-  owner: '@me',
-  name: 'skills-introduction-to-github',
-  description: 'My clone repository',
-  visibility: 'public',
-}).toString()
--->
+    chunk = list(chunks(proxies, 10))
 
-[![start-course](https://user-images.githubusercontent.com/1221423/235727646-4a590299-ffe5-480d-8cd5-8194ea184546.svg)](https://github.com/new?template_owner=skills&template_name=introduction-to-github&owner=%40me&name=skills-introduction-to-github&description=My+clone+repository&visibility=public)
+    print("")
+    print_status("Video complaint attack is starting!\n")
 
-1. Right-click **Start course** and open the link in a new tab.
-2. In the new tab, most of the prompts will automatically fill in for you.
-   - For owner, choose your personal account or an organization to host the repository.
-   - We recommend creating a public repository, as private repositories will [use Actions minutes](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions).
-   - Scroll down and click the **Create repository** button at the bottom of the form.
-3. After your new repository is created, wait about 20 seconds, then refresh the page. Follow the step-by-step instructions in the new repository's README.
+    i = 1
+    for proxy_list in chunk:
+        p = Process(target=video_attack_process, args=(video_url, proxy_list,))
+        p.start()
+        print_status(str(i) + ". Transaction Opened!")
+        if (k == 5): print()
+        i = i + 1
 
-<footer>
+def profile_attack(proxies):
+    username = ask_question("Enter the username of the person you want to report")
+    print(Style.RESET_ALL)
+    if (len(proxies) == 0):
+        for k in range(5):
+            p = Process(target=profile_attack_process, args=(username, [],))
+            p.start()
+            print_status(str(k + 1) + ". Transaction Opened!")
+        return
 
-<!--
-  <<< Author notes: Footer >>>
-  Add a link to get support, GitHub status page, code of conduct, license link.
--->
+    chunk = list(chunks(proxies, 10))
 
----
+    print("")
+    print_status("Profile complaint attack is starting!\n")
 
-Get help: [Post in our discussion board](https://github.com/orgs/skills/discussions/categories/introduction-to-github) &bull; [Review the GitHub status page](https://www.githubstatus.com/)
+    i = 1
+    for proxy_list in chunk:
+        p = Process(target=profile_attack_process, args=(username, proxy_list,))
+        p.start()
+        print_status(str(i) + ". Transaction Opened!")
+        if (k == 5): print()
+        i = i + 1
 
-&copy; 2024 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
+def main():
+    print_success("Modules loaded!\n")
 
-</footer>
+    ret = ask_question("Would you like to use a proxy? [Y/N]")
+
+    proxies = []
+
+    if (ret == "Y" or ret == "y"):
+        ret = ask_question("Would you like to collect your proxies from the internet? [Y/N]")
+
+        if (ret == "Y" or ret == "y"):
+            print_status("Gathering proxy from the Internet! This may take a while.\n")
+            proxies = find_proxies()
+        elif (ret == "N" or ret == "n"):
+            print_status("Please have a maximum of 50 proxies in a file!")
+            file_path = ask_question("Enter the path to your proxy list")
+            proxies = parse_proxy_file(file_path)
+        else:
+            print_error("Answer not understood, exiting!")
+            exit()
+
+        print_success(str(len(proxies)) + " Number of proxies found!\n")
+    elif (ret == "N" or ret == "n"):
+        pass
+    else:
+        print_error("Answer not understood, exiting!")
+        exit()
+
+    
+
+    print("")
+    print_status("1 - Report the profile.")
+    print_status("2 - Report a video.")
+    report_choice = ask_question("Please select the complaint method")
+    print("")
+
+    if (report_choice.isdigit() == False):
+        print_error("The answer is not understood.")
+        exit(0)
+    
+    if (int(report_choice) > 2 or int(report_choice) == 0):
+        print_error("The answer is not understood..")
+        exit(0)
+
+    if (int(report_choice) == 1):
+        profile_attack(proxies)
+    elif (int(report_choice) == 2):
+        video_attack(proxies)
+
+if __name__ == "__main__":
+    print_logo()
+    try:
+        main()
+        print(Style.RESET_ALL)
+    except KeyboardInterrupt:
+        print("\n\n" + Fore.RED + "[ * ] The program is closing!")
+        print(Style.RESET_ALL)
+        _exit(0)
