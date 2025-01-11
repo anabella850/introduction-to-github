@@ -1,74 +1,92 @@
-<header>
+import time
+from webbot import *
+import pyautogui
 
-<!--
-  <<< Author notes: Course header >>>
-  Include a 1280×640 image, course title in sentence case, and a concise description in emphasis.
-  In your repository settings: enable template repository, add your 1280×640 social image, auto delete head branches.
-  Add your open source license, GitHub uses MIT license.
--->
+import argparse
+import sys
 
-# Introduction to GitHub
+# To parse the arguments
+def getOptions(args=sys.argv[1:]):
 
-_Get started using GitHub in less than an hour._
+    parser = argparse.ArgumentParser(description="This bot helps users to mass report accounts with clickbaits or objectionable material.")
+    parser.add_argument("-u", "--username", type = str, default = "", help = "Username to report.")
+    parser.add_argument("-f", "--file", type = str, default = "acc.txt", help = "Accounts list ( Defaults to acc.txt in program directory ).")
 
-</header>
+    options = parser.parse_args(args)
 
-<!--
-  <<< Author notes: Course start >>>
-  Include start button, a note about Actions minutes,
-  and tell the learner why they should take the course.
--->
+    return options
 
-## Welcome
 
-People use GitHub to build some of the most advanced technologies in the world. Whether you’re visualizing data or building a new game, there’s a whole community and set of tools on GitHub that can help you do it even better. GitHub Skills’ “Introduction to GitHub” course guides you through everything you need to start contributing in less than an hour.
+args = getOptions()
 
-- **Who is this for**: New developers, new GitHub users, and students.
-- **What you'll learn**: We'll introduce repositories, branches, commits, and pull requests.
-- **What you'll build**: We'll make a short Markdown file you can use as your [profile README](https://docs.github.com/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme).
-- **Prerequisites**: None. This course is a great introduction for your first day on GitHub.
-- **How long**: This course takes less than one hour to complete.
+username = args.username
+acc_file = args.file
 
-In this course, you will:
+if username == "" :
+	username = input("Username: ")
 
-1. Create a branch
-2. Commit a file
-3. Open a pull request
-4. Merge your pull request
+a = open(acc_file, "r").readlines()
+file = [s.rstrip()for s in a]
+file.reverse()
 
-### How to start this course
+user = []
+passw = []
+for lines in file:
+    file = lines.split(":")
 
-<!-- For start course, run in JavaScript:
-'https://github.com/new?' + new URLSearchParams({
-  template_owner: 'skills',
-  template_name: 'introduction-to-github',
-  owner: '@me',
-  name: 'skills-introduction-to-github',
-  description: 'My clone repository',
-  visibility: 'public',
-}).toString()
--->
+    un = file[0]
+    pw = file[1]
+    user.append(un)
+    passw.append(pw)
 
-[![start-course](https://user-images.githubusercontent.com/1221423/235727646-4a590299-ffe5-480d-8cd5-8194ea184546.svg)](https://github.com/new?template_owner=skills&template_name=introduction-to-github&owner=%40me&name=skills-introduction-to-github&description=My+clone+repository&visibility=public)
+for line in range(len(file)+1):
+    web = Browser()
+    web.go_to("https://www.instagram.com/accounts/login/")
 
-1. Right-click **Start course** and open the link in a new tab.
-2. In the new tab, most of the prompts will automatically fill in for you.
-   - For owner, choose your personal account or an organization to host the repository.
-   - We recommend creating a public repository, as private repositories will [use Actions minutes](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions).
-   - Scroll down and click the **Create repository** button at the bottom of the form.
-3. After your new repository is created, wait about 20 seconds, then refresh the page. Follow the step-by-step instructions in the new repository's README.
+    web.type(user[line], into='Phone number, username, or email')
+    time.sleep(0.5)
+    web.press(web.Key.TAB)
+    time.sleep(0.5)
+    web.type(passw[line], into='Password')
+    web.press(web.Key.ENTER)
 
-<footer>
+    time.sleep(2.0)
 
-<!--
-  <<< Author notes: Footer >>>
-  Add a link to get support, GitHub status page, code of conduct, license link.
--->
+    web.go_to("https://www.instagram.com/%s/" % username)
 
----
+    time.sleep(1.5)
 
-Get help: [Post in our discussion board](https://github.com/orgs/skills/discussions/categories/introduction-to-github) &bull; [Review the GitHub status page](https://www.githubstatus.com/)
+    web.click(xpath='//*[@id="react-root"]/section/main/div/header/section/div[1]/div/button')
 
-&copy; 2024 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
+    time.sleep(0.5)
 
-</footer>
+    web.click(text='Report User')
+
+    time.sleep(1.5)
+
+    web.click(xpath="/html/body/div[4]/div/div/div/div[2]/div/div/div/div[3]/button[1]")
+
+    time.sleep(0.5)
+
+    web.click(text='Close')
+
+    time.sleep(0.5)
+
+    web.click(xpath='/html/body/div[1]/section/nav/div[2]/div/div/div[3]/div/div[3]/a')
+
+    time.sleep(0.5)
+
+    web.click(xpath='/html/body/div[1]/section/main/div/header/section/div[1]/div/button')
+
+    time.sleep(0.5)
+
+    web.click(text='Log Out')
+
+    time.sleep(0.5)
+
+    pyautogui.keyDown('ctrl')
+    time.sleep(0.25)
+    pyautogui.keyDown('w')
+    time.sleep(0.5)
+    pyautogui.keyUp('ctrl')
+    pyautogui.keyUp('w')
